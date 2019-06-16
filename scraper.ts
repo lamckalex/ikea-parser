@@ -30,37 +30,23 @@ function getAllCategories() {
         .then(function (html: any) {
             let categories = $('ul.range-catalog-list__list', html).children();
 
-            console.log(categories.length);
+            // console.log(categories.length);
 
             let parsedCategories: string[] = [];
 
             categories.each((index: number, element: any) => {
                 parsedCategories.push($(element).children('a').attr('href'));
             })
-
-
             
             resolve(parsedCategories);
         })
         .catch(function (err: any) {
             //handle error
         });
-
-
-        // // Do async job
-        // request.get(options, function(err, resp, body) {
-        //     if (err) {
-        //         reject(err);
-        //     } else {
-        //         resolve(JSON.parse(body));
-        //     }
-        // })
     })
-
-
 }
 
-function getFromAPI(offset: number, max?: number) {
+function getFromAPI(id: string, offset: number, max?: number) {
     const sessionKey = "5286cc02-fda8-486d-3edd-768c6fb5d143"
     const customerKey = "f88074fb-1d2b-40d2-38b3-b6cf1bf06b1a"
 
@@ -72,7 +58,8 @@ function getFromAPI(offset: number, max?: number) {
 
     const arg: any = {};
     arg.market = 'CAEN';
-    arg.selected_category = ('category_catalog_caen:\'10475\'');
+    // arg.selected_category = ('category_catalog_caen:\'10475\'');
+    arg.selected_category = ('category_catalog_caen:\''+ id + '\'');
     arg.window_first = offset; //seems to need a min value of 1
     arg.window_last = last;
     arg.sort_by = 'relevance';
@@ -135,7 +122,7 @@ function getFromAPI(offset: number, max?: number) {
             })
                 
 
-            let temptxt = fs.readFileSync('temp.txt','utf8')
+            let temptxt = fs.readFileSync( './dump/' + id + '.txt','utf8')
 
             let origJsonData = [];
             if(temptxt){
@@ -147,11 +134,11 @@ function getFromAPI(offset: number, max?: number) {
             let jsondata = JSON.stringify(aps);
 
 
-            fs.writeFile("temp.txt", jsondata, (err: any) => {
-                getFromAPI(last + 1, catProd.productCount[0].count);
+            fs.writeFile( './dump/' + id + ".txt", jsondata, (err: any) => {
+                getFromAPI(id, last + 1, catProd.productCount[0].count);
         
                 if (err) console.log(err);
-                console.log("Successfully Written to File.");
+                // console.log("Successfully Written to File.");
             });
         }
 
@@ -172,10 +159,6 @@ function init(){
         const pathname = current_url.pathname;
         const search_params = current_url.searchParams;
 
-        console.log(method);
-        console.log(pathname);
-        console.log(search_params);
-    
         if(method === 'GET' && pathname === '/categories' && !search_params.has('id')) {
             let promise = getAllCategories();
 
@@ -186,7 +169,7 @@ function init(){
         }
         else if(method === 'GET' && pathname === '/categories' && search_params.has('id')) {
             // GET request to /posts?id=123
-            let text = fs.readFileSync('temp.txt','utf8')
+            let text = fs.readFileSync( './dump/' + search_params.get('id'), 'utf8')
             const storedData = JSON.parse(text);
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(storedData));
@@ -200,10 +183,20 @@ function init(){
         }
     }).listen(8080);
 
-    fs.writeFile("temp.txt",'', (err: any) => {
-        getFromAPI(1, undefined);
-    });
-    
+    getAllCategories().then(function(categories){
+        let categoryIDs:string[] = [];
+
+        (categories as string[]).forEach((cat: string) => {
+            categoryIDs.push(cat.substring(cat.length - 6, cat.length-1));
+        });
+
+        categoryIDs.forEach(function(id){
+            fs.writeFile( './dump/' + id+ '.txt','', (err: any) => {
+                getFromAPI(id, 1, undefined);
+            });    
+        })
+
+    })
 }
 
 init();
