@@ -1,4 +1,7 @@
-import { stringify } from "querystring";
+import { CustomProduct } from './classes/custom-product'
+import { IkeaCategory } from './classes/ikea-category'
+import { IkeaCategoryProducts } from './classes/ikea-category-products'
+import { IkeaProduct } from './classes/ikea-product'
 
 const rp = require('request-promise');
 var http = require('http');
@@ -22,79 +25,39 @@ function getKallax() {
 function getAllCategories() {
     const url = 'https://www.ikea.com/ca/en/cat/all-furniture-fu001/';
 
-    rp(url)
+    return new Promise(function(resolve, reject) {
+        rp(url)
         .then(function (html: any) {
             let categories = $('ul.range-catalog-list__list', html).children();
 
             console.log(categories.length);
 
+            let parsedCategories: string[] = [];
+
             categories.each((index: number, element: any) => {
-                console.log($(element).children('a').attr('href'));
+                parsedCategories.push($(element).children('a').attr('href'));
             })
+
+
+            
+            resolve(parsedCategories);
         })
         .catch(function (err: any) {
             //handle error
         });
-}
 
-class AlexProduct {
-    img: string;
-    name: string;
-    type: string;
-    description: string;
-    price: string;
 
-    constructor(img:string, name:string, type:string, description:string, price:string){
-        this.img = img;
-        this.name = name;
-        this.type = type;
-        this.description = description;
-        this.price = price;
-    }
+        // // Do async job
+        // request.get(options, function(err, resp, body) {
+        //     if (err) {
+        //         reject(err);
+        //     } else {
+        //         resolve(JSON.parse(body));
+        //     }
+        // })
+    })
 
-}
 
-class IkeaProduct {
-    id: string;
-    product_key: string;
-    rank: string;
-    relevance: string;
-
-    constructor(id: string, product_key: string, rank: string, relevance: string) {
-        this.id = id;
-        this.product_key = product_key;
-        this.rank = rank;
-        this.relevance = relevance;
-    }
-}
-
-class IkeaCategoryProducts {
-
-    attributes: IkeaProduct;
-    key: string;
-    ticket: string;
-    variants: any[];
-
-    constructor(attributes: any, key: string, ticket: string, variants: any[]) {
-        this.attributes = attributes;
-        this.key = key;
-        this.ticket = ticket;
-        this.variants = variants;
-    }
-}
-
-class IkeaCategory {
-    categoryOverview: any[];
-    categoryProducts: any[];
-    facets: any[];
-    productCount: any[];
-
-    constructor(categoryOverview: any[], categoryProducts: any[], facets: any[], productCount: any[]) {
-        this.categoryOverview = categoryOverview;
-        this.categoryProducts = categoryProducts;
-        this.facets = facets;
-        this.productCount = productCount;
-    }
 }
 
 function getFromAPI(offset: number, max?: number) {
@@ -155,12 +118,12 @@ function getFromAPI(offset: number, max?: number) {
     
             
             let text = '';
-            let aps:AlexProduct[] = [];
+            let aps:CustomProduct[] = [];
                     
             validResults.forEach(function (a, index) {
                 let po: any = $(a)
     
-                let ap: AlexProduct = new AlexProduct(
+                let ap: CustomProduct = new CustomProduct(
                     $('img',po).attr('src'),
                     $('span.product-compact__name', po).text(),
                     $('span.product-compact__type', po).text(),
@@ -198,20 +161,43 @@ function getFromAPI(offset: number, max?: number) {
 function init(){
     // getKallax();
 
-    getAllCategories();
     
     http.createServer(function (req:any, res:any) {
-    
-        let text = fs.readFileSync('temp.txt','utf8')
-        
-        // res.writeHead(200, {'Content-Type': 'text/plain'});
-        // res.setHeader('Content-Type', 'application/json');
 
-        const storedData = JSON.parse(text);
+        var baseURL = 'http://' + req.headers.host + '/';
+        // var myURL = new URL(req.url, baseURL);
 
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(storedData));
+        const method = req.method;
+        const current_url = new URL(req.url, baseURL);
+        const pathname = current_url.pathname;
+        const search_params = current_url.searchParams;
+
+        console.log(method);
+        console.log(pathname);
+        console.log(search_params);
     
+        if(method === 'GET' && pathname === '/categories' && !search_params.has('id')) {
+            let promise = getAllCategories();
+
+            promise.then(function(categories){
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify(categories));
+            })
+        }
+        else if(method === 'GET' && pathname === '/categories' && search_params.has('id')) {
+            // GET request to /posts?id=123
+            let text = fs.readFileSync('temp.txt','utf8')
+            const storedData = JSON.parse(text);
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(storedData));
+        }
+        // else if(method === 'POST' && pathname === '/posts') {
+        //     // POST request to /posts
+        // } 
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({}));
+        }
     }).listen(8080);
 
     fs.writeFile("temp.txt",'', (err: any) => {
