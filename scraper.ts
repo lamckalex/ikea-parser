@@ -168,8 +168,7 @@ function init(){
             })
         }
         else if(method === 'GET' && pathname === '/categories' && search_params.has('id')) {
-            // GET request to /posts?id=123
-            let text = fs.readFileSync( './dump/' + search_params.get('id'), 'utf8')
+            let text = fs.readFileSync( './dump/' + search_params.get('id') + '.txt', 'utf8')
             const storedData = JSON.parse(text);
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(storedData));
