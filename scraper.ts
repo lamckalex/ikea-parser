@@ -183,17 +183,26 @@ function init(){
         }
     }).listen(8080);
 
+    if (!fs.existsSync('./dump')){
+        fs.mkdirSync('./dump');
+    }
+
     getAllCategories().then(function(categories){
         let categoryIDs:string[] = [];
 
         (categories as string[]).forEach((cat: string) => {
             categoryIDs.push(cat.substring(cat.length - 6, cat.length-1));
         });
-
         categoryIDs.forEach(function(id){
-            fs.writeFile( './dump/' + id+ '.txt','', (err: any) => {
-                getFromAPI(id, 1, undefined);
-            });    
+            let fileCheck = fs.existsSync('./dump/' + id+ '.txt');
+            if(!fileCheck){
+                console.log('./dump/' + id+ '.txt does not exists, fetching...');
+                fs.writeFile( './dump/' + id+ '.txt','', (err: any) => {
+                    getFromAPI(id, 1, undefined);
+                });    
+            } else {
+                console.log('./dump/' + id+ '.txt exists');
+            }
         })
 
     })

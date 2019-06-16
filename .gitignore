@@ -1,2 +1,6 @@
 node_modules/
 dump/
+tsconfig.json
+.vscode/launch.json
+*.js
+*.js.map
