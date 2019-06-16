@@ -1,0 +1,26 @@
+{
+  "name": "web-scraper",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000i\u0000k\u0000e\u0000a\u0000-\u0000p\u0000a\u0000r\u0000s\u0000e\u0000r\u0000\r\u0000 \u0000",
+  "main": "scraper.js",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
+    "puppeteer": "^1.16.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lamckalex/ikea-parser.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lamckalex/ikea-parser/issues"
+  },
+  "homepage": "https://github.com/lamckalex/ikea-parser#readme"
+}
